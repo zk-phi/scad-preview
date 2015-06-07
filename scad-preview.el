@@ -94,6 +94,11 @@
 (defvar scad-preview--source-buffer     nil)
 (defvar scad-preview--camera-parameters nil)
 (defvar scad-preview--timer-object      nil)
+(defvar scad-preview--modified-flag     nil)
+
+(defun scad-preview--after-change-function (&rest _)
+  (when (eq (current-buffer) scad-preview--source-buffer)
+    (setq scad-preview--modified-flag t)))
 
 (defun scad-preview-reset-camera-parameters ()
   (interactive)
@@ -110,7 +115,12 @@
   (setq scad-preview--buffer        (get-buffer-create "*SCAD Preview*")
         scad-preview--source-buffer (current-buffer)
         scad-preview--timer-object
-        (run-with-idle-timer scad-preview-update-delay t 'scad-preview--update))
+        (run-with-idle-timer
+         scad-preview-update-delay t
+         (lambda ()
+           (when scad-preview--modified-flag
+             (setq scad-preview--modified-flag nil)
+             (scad-preview--update)))))
   (with-selected-window (split-window (selected-window)
                                       (- scad-preview-window-size)
                                       scad-preview-window-position)
@@ -136,8 +146,8 @@
         scad-preview--timer-object  nil))
 
 (defun scad-preview--update ()
-  (when (eq (current-buffer) scad-preview--source-buffer)
-    (let ((infile (make-temp-file "scad_" nil ".png"))
+  (with-current-buffer scad-preview--source-buffer
+    (let ((infile (make-temp-file "scad_" nil ".scad"))
           (outfile (concat temporary-file-directory (make-temp-name "scad_")  ".png")))
       (save-restriction
         (widen)
@@ -166,7 +176,9 @@
                   (delete-file ,outfile))))
           (error (progn (delete-file infile)
                         (scad-preview--end)
-                        (message "SCAD: failed to start openscad process."))))))))
+                        (message "SCAD: Failed to start OpenSCAD process."))))))))
+
+(add-hook 'after-change-functions 'scad-preview--after-change-function)
 
 ;; + minor-mode for the preview buffer
 
