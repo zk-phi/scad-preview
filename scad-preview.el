@@ -53,6 +53,7 @@
 ;;; Code:
 
 (require 'image-mode)
+(require 'compile)
 (require 'scad "scad-mode")
 
 (defconst scad-preview-version "0.1.0")
@@ -268,20 +269,9 @@ preview buffer."
 (defun scad-preview-export ()
   "Render and export current SCAD model."
   (interactive)
-  (let ((infile (make-temp-file "scad_" nil ".scad")))
-    (save-restriction
-      (widen)
-      (write-region (point-min) (point-max) infile nil 'nomsg))
-    (condition-case nil
-        (set-process-sentinel
-         (start-process "scad render" (get-buffer-create " *scad-render*") scad-command
-                        "-o" (expand-file-name (read-file-name "Export to: "))
-                        infile)
-         `(lambda (p _)
-            (delete-file ,infile)
-            (message "SCAD: Successfully exported.")))
-      (error (progn (delete-file infile)
-                    (message "SCAD: Failed to start OpenSCAD process."))))))
+  (compile (concat scad-command
+                   " -o " (expand-file-name (read-file-name "Export to: "))
+                   " " buffer-file-name)))
 
 ;;;###autoload
 (defun scad-preview-mode ()
