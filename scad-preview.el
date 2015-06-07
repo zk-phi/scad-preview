@@ -45,11 +45,6 @@
 ;; - r         scad-preview-reset-camera-parameters
 ;;
 ;; You can also use "hjkl" or "npbf" instead of arrow keys.
-;;
-;; If you want to start `scad-preview-mode' automatically,
-;; add `scad-preview-mode' to `scad-mode-hook'.
-;;
-;;   (add-hook 'scad-mode-hook 'scad-preview-mode)
 
 ;;; Change Log:
 
