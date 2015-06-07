@@ -247,6 +247,7 @@
 
 (define-key scad-mode-map (kbd "C-c C-p") 'scad-preview-mode)
 
+(defun scad-preview-mode ()
   "Preview SCAD models in real-time in Emacs."
   (interactive)
   (if scad-preview-mode (scad-preview--end) (scad-preview--start)))
