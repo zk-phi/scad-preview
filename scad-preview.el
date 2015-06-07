@@ -240,6 +240,27 @@
 
 ;; + interface
 
+(defun scad-preview-rotate ()
+  (interactive)
+  (message "Use arrow keys (+[CM]) to rotate image.")
+  (set-temporary-overlay-map scad-preview--image-mode-map t))
+
+(defun scad-preview-export ()
+  (interactive)
+  (let ((infile (make-temp-file "scad_" nil ".scad")))
+    (save-restriction
+      (widen)
+      (write-region (point-min) (point-max) infile))
+    (condition-case nil
+        (set-process-sentinel
+         (start-process "scad render" (get-buffer-create " *scad-render*") scad-command
+                        "-o" (expand-file-name (read-file-name "Export to: "))
+                        infile)
+         `(lambda (p _)
+            (delete-file ,infile)
+            (message "SCAD: Successfully exported.")))
+      (error (progn (delete-file infile)
+                    (message "SCAD: Failed to start OpenSCAD process."))))))
 
 (defun scad-preview-mode ()
   "Preview SCAD models in real-time in Emacs."
