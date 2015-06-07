@@ -97,20 +97,25 @@
 (defvar scad-preview--modified-flag     nil)
 
 (defun scad-preview--after-change-function (&rest _)
+  "Mark that the buffer is modified."
   (setq scad-preview--modified-flag t))
 
 (defun scad-preview-reset-camera-parameters ()
+  "Reset camera parameters and update the preview buffer."
   (interactive)
   (setq scad-preview--camera-parameters
         (copy-sequence scad-preview-default-camera-parameters))
   (scad-preview--update))
 
 (defun scad-preview--increment-camera-parameter (index val)
+  "Increment INDEX-th camera parameter by VAL and update the
+preview buffer."
   (let ((cell (nthcdr index scad-preview--camera-parameters)))
     (setcar cell (+ (car cell) val))
     (scad-preview--update)))
 
 (defun scad-preview--start ()
+  "Turn `scad-preview-mode' on."
   (unless scad-preview-mode
     (setq scad-preview-mode           t
           scad-preview--buffer        (get-buffer-create "*SCAD Preview*")
@@ -133,6 +138,7 @@
     (scad-preview-reset-camera-parameters)))
 
 (defun scad-preview--end ()
+  "Turn `scad-preview-mode' off."
   (when scad-preview-mode
     (setq scad-preview-mode nil)
     (when (timerp scad-preview--timer-object)
@@ -150,6 +156,7 @@
           scad-preview--timer-object  nil)))
 
 (defun scad-preview--update ()
+  "Update the preview buffer asynchronously."
   (with-current-buffer scad-preview--source-buffer
     (let ((infile (make-temp-file "scad_" nil ".scad"))
           (outfile (concat temporary-file-directory (make-temp-name "scad_")  ".png")))
@@ -251,11 +258,13 @@
 ;; + interface
 
 (defun scad-preview-rotate ()
+  "Rotate preview image interactively."
   (interactive)
   (message "Use arrow keys (+[CM]) to rotate image.")
   (set-temporary-overlay-map scad-preview--image-mode-map t))
 
 (defun scad-preview-export ()
+  "Render and export current SCAD model."
   (interactive)
   (let ((infile (make-temp-file "scad_" nil ".scad")))
     (save-restriction
