@@ -90,6 +90,7 @@
 
 ;; + core functions/variables
 
+(defvar scad-preview-mode               nil)
 (defvar scad-preview--buffer            nil)
 (defvar scad-preview--source-buffer     nil)
 (defvar scad-preview--camera-parameters nil)
@@ -97,8 +98,7 @@
 (defvar scad-preview--modified-flag     nil)
 
 (defun scad-preview--after-change-function (&rest _)
-  (when (eq (current-buffer) scad-preview--source-buffer)
-    (setq scad-preview--modified-flag t)))
+  (setq scad-preview--modified-flag t))
 
 (defun scad-preview-reset-camera-parameters ()
   (interactive)
@@ -112,39 +112,43 @@
     (scad-preview--update)))
 
 (defun scad-preview--start ()
-  (setq scad-preview--buffer        (get-buffer-create "*SCAD Preview*")
-        scad-preview--source-buffer (current-buffer)
-        scad-preview--timer-object
-        (run-with-idle-timer
-         scad-preview-update-delay t
-         (lambda ()
-           (when scad-preview--modified-flag
-             (setq scad-preview--modified-flag nil)
-             (scad-preview--update)))))
-  (with-selected-window (split-window (selected-window)
-                                      (- scad-preview-window-size)
-                                      scad-preview-window-position)
-    (switch-to-buffer scad-preview--buffer))
-  (add-hook 'kill-buffer-hook 'scad-preview--end nil t)
-  (with-current-buffer scad-preview--buffer
-    (add-hook 'kill-buffer-hook 'scad-preview--end nil t))
-  (scad-preview-reset-camera-parameters))
+  (unless scad-preview-mode
+    (setq scad-preview-mode           t
+          scad-preview--buffer        (get-buffer-create "*SCAD Preview*")
+          scad-preview--source-buffer (current-buffer)
+          scad-preview--timer-object
+          (run-with-idle-timer
+           scad-preview-update-delay t
+           (lambda ()
+             (when scad-preview--modified-flag
+               (setq scad-preview--modified-flag nil)
+               (scad-preview--update)))))
+    (with-selected-window (split-window (selected-window)
+                                        (- scad-preview-window-size)
+                                        scad-preview-window-position)
+      (switch-to-buffer scad-preview--buffer))
+    (add-hook 'kill-buffer-hook 'scad-preview--end nil t)
+    (add-hook 'after-change-functions 'scad-preview--after-change-function t)
+    (with-current-buffer scad-preview--buffer
+      (add-hook 'kill-buffer-hook 'scad-preview--end nil t))
+    (scad-preview-reset-camera-parameters)))
 
 (defun scad-preview--end ()
-  (when (timerp scad-preview--timer-object)
-    (cancel-timer scad-preview--timer-object))
-  (when (buffer-live-p scad-preview--buffer)
-    (when (cdr (window-list))
-      (mapc 'delete-window (get-buffer-window-list scad-preview--buffer)))
-    (with-current-buffer scad-preview--buffer
-      (remove-hook 'kill-buffer-hook 'scad-preview--end t)
-      (kill-buffer scad-preview--buffer)))
-  (when (buffer-live-p scad-preview--source-buffer)
-    (with-current-buffer scad-preview--source-buffer
-      (remove-hook 'kill-buffer-hook 'scad-preview--end t)))
-  (setq scad-preview--buffer        nil
-        scad-preview--source-buffer nil
-        scad-preview--timer-object  nil))
+  (when scad-preview-mode
+    (setq scad-preview-mode nil)
+    (when (timerp scad-preview--timer-object)
+      (cancel-timer scad-preview--timer-object))
+    (when (buffer-live-p scad-preview--buffer)
+      (when (cdr (window-list))
+        (mapc 'delete-window (get-buffer-window-list scad-preview--buffer)))
+      (kill-buffer scad-preview--buffer))
+    (when (buffer-live-p scad-preview--source-buffer)
+      (with-current-buffer scad-preview--source-buffer
+        (remove-hook 'kill-buffer-hook 'scad-preview--end t)
+        (remove-hook 'after-change-functions 'scad-preview--after-change-function t)))
+    (setq scad-preview--buffer        nil
+          scad-preview--source-buffer nil
+          scad-preview--timer-object  nil)))
 
 (defun scad-preview--update ()
   (with-current-buffer scad-preview--source-buffer
@@ -178,8 +182,6 @@
           (error (progn (delete-file infile)
                         (scad-preview--end)
                         (message "SCAD: Failed to start OpenSCAD process."))))))))
-
-(add-hook 'after-change-functions 'scad-preview--after-change-function)
 
 ;; + minor-mode for the preview buffer
 
@@ -245,12 +247,9 @@
 
 (define-key scad-mode-map (kbd "C-c C-p") 'scad-preview-mode)
 
-(define-minor-mode scad-preview-mode
   "Preview SCAD models in real-time in Emacs."
-  :global t
-  :init-value nil
-  :lighter "SCADp"
-  (if scad-preview-mode (scad-preview--start) (scad-preview--end)))
+  (interactive)
+  (if scad-preview-mode (scad-preview--end) (scad-preview--start)))
 
 ;; + provide
 
