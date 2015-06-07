@@ -134,7 +134,8 @@
   (when (timerp scad-preview--timer-object)
     (cancel-timer scad-preview--timer-object))
   (when (buffer-live-p scad-preview--buffer)
-    (mapc 'delete-window (get-buffer-window-list scad-preview--buffer))
+    (let ((windows (get-buffer-window-list scad-preview--buffer)))
+      (when (cdr windows) (mapc 'delete-window windows)))
     (with-current-buffer scad-preview--buffer
       (remove-hook 'kill-buffer-hook 'scad-preview--end t)
       (kill-buffer scad-preview--buffer)))
