@@ -155,7 +155,7 @@
           (outfile (concat temporary-file-directory (make-temp-name "scad_")  ".png")))
       (save-restriction
         (widen)
-        (write-region (point-min) (point-max) infile))
+        (write-region (point-min) (point-max) infile nil 'nomsg))
       (save-window-excursion
         (condition-case nil
             (set-process-sentinel
@@ -224,11 +224,8 @@
     (define-key keymap (kbd "M-<down>") 'scad-preview-trnsz+)
     (define-key keymap (kbd "M-n") 'scad-preview-trnsz+)
     (define-key keymap (kbd "M-j") 'scad-preview-trnsz+)
-    keymap))
-
-(define-derived-mode scad-preview--image-mode image-mode "SCADp"
-  "Minor mode for SCAD preview buffers."
-  (use-local-map scad-preview--image-mode-map))
+    keymap)
+  "Keymap for SCAD preview buffers.")
 
 (defun scad-preview-trnsx+ () (interactive) (scad-preview--increment-camera-parameter 0 10))
 (defun scad-preview-trnsx- () (interactive) (scad-preview--increment-camera-parameter 0 -10))
@@ -243,6 +240,14 @@
 (defun scad-preview-dist+ () (interactive) (scad-preview--increment-camera-parameter 6 100))
 (defun scad-preview-dist- () (interactive) (scad-preview--increment-camera-parameter 6 -100))
 
+(define-derived-mode scad-preview--image-mode fundamental-mode "SCADp"
+  "Minor mode for SCAD preview buffers."
+  ;; suppress messages (http://qiita.com/itiut@github/items/d917eafd6ab255629346)
+  (let ((message-log-max nil))
+    (with-temp-message (or (current-message) "")
+      (image-mode)))
+  (use-local-map scad-preview--image-mode-map))
+
 ;; + interface
 
 (defun scad-preview-rotate ()
@@ -255,7 +260,7 @@
   (let ((infile (make-temp-file "scad_" nil ".scad")))
     (save-restriction
       (widen)
-      (write-region (point-min) (point-max) infile))
+      (write-region (point-min) (point-max) infile nil 'nomsg))
     (condition-case nil
         (set-process-sentinel
          (start-process "scad render" (get-buffer-create " *scad-render*") scad-command
