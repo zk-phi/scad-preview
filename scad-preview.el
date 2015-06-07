@@ -1,4 +1,4 @@
-;;; scad-preview.el --- Preview SCAD models in real-time in Emacs
+;;; scad-preview.el --- Preview SCAD models in real-time within Emacs
 
 ;; Copyright (C) 2013-2015 zk_phi
 
@@ -52,6 +52,7 @@
 
 ;;; Code:
 
+(require 'image-mode)
 (require 'scad "scad-mode")
 
 (defconst scad-preview-version "0.1.0")
@@ -59,14 +60,14 @@
 ;; + customs
 
 (defgroup scad-preview nil
-  "Preview SCAD models in real-time in Emacs."
+  "Preview SCAD models in real-time within Emacs."
   :group 'emacs)
 
 (defcustom scad-preview-default-camera-parameters '(0 0 0 50 0 20 500)
   "Default parameters for the Gimbal camera."
   :group 'scad-preview)
 
-(defcustom scad-preview-update-delay 1.5
+(defcustom scad-preview-refresh-delay 1.5
   "Delay in seconds until updating preview."
   :group 'scad-preview)
 
@@ -105,14 +106,14 @@
   (interactive)
   (setq scad-preview--camera-parameters
         (copy-sequence scad-preview-default-camera-parameters))
-  (scad-preview--update))
+  (scad-preview-refresh))
 
 (defun scad-preview--increment-camera-parameter (index val)
   "Increment INDEX-th camera parameter by VAL and update the
 preview buffer."
   (let ((cell (nthcdr index scad-preview--camera-parameters)))
     (setcar cell (+ (car cell) val))
-    (scad-preview--update)))
+    (scad-preview-refresh)))
 
 (defun scad-preview--start ()
   "Turn `scad-preview-mode' on."
@@ -122,11 +123,11 @@ preview buffer."
           scad-preview--source-buffer (current-buffer)
           scad-preview--timer-object
           (run-with-idle-timer
-           scad-preview-update-delay t
+           scad-preview-refresh-delay t
            (lambda ()
              (when scad-preview--modified-flag
                (setq scad-preview--modified-flag nil)
-               (scad-preview--update)))))
+               (scad-preview-refresh)))))
     (with-selected-window (split-window (selected-window)
                                         (- scad-preview-window-size)
                                         scad-preview-window-position)
@@ -155,8 +156,9 @@ preview buffer."
           scad-preview--source-buffer nil
           scad-preview--timer-object  nil)))
 
-(defun scad-preview--update ()
-  "Update the preview buffer asynchronously."
+(defun scad-preview-refresh ()
+  "Update the preview buffer."
+  (interactive)
   (with-current-buffer scad-preview--source-buffer
     (let ((infile (make-temp-file "scad_" nil ".scad"))
           (outfile (concat temporary-file-directory (make-temp-name "scad_")  ".png")))
@@ -281,8 +283,9 @@ preview buffer."
       (error (progn (delete-file infile)
                     (message "SCAD: Failed to start OpenSCAD process."))))))
 
+;;;###autoload
 (defun scad-preview-mode ()
-  "Preview SCAD models in real-time in Emacs."
+  "Preview SCAD models in real-time within Emacs."
   (interactive)
   (if scad-preview-mode (scad-preview--end) (scad-preview--start)))
 
