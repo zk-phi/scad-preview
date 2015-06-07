@@ -83,6 +83,10 @@
   "Size in columns(lines) of the preview window."
   :group 'scad-preview)
 
+(defcustom scad-preview-colorscheme "Cornfield"
+  "Colorscheme for rendering preview."
+  :group 'scad-preview)
+
 ;; + core functions/variables
 
 (defvar scad-preview-mode               nil)
@@ -158,11 +162,12 @@
              (start-process
               "scad process" nil scad-command
               "-o" outfile
-              (format "--imgsize=%d,%d"
-                      (car scad-preview-image-size) (cdr scad-preview-image-size))
-              (format "--camera=%s"
-                      (mapconcat 'number-to-string
-                                 scad-preview--camera-parameters ","))
+              (concat "--imgsize="
+                      (number-to-string (car scad-preview-image-size)) ","
+                      (number-to-string (cdr scad-preview-image-size)))
+              (concat "--camera="
+                      (mapconcat 'number-to-string scad-preview--camera-parameters ","))
+              (concat "--colorscheme=" scad-preview-colorscheme)
               infile)
              `(lambda (p _)
                 (delete-file ,infile)
