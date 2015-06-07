@@ -1,0 +1,7 @@
+* scad-preview.el
+
+Preview SCAD models in real-time in Emacs
+
+SCAD モデルを Emacs 上でプレビュー
+
+[[file:screenshot.png]]
