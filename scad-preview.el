@@ -26,7 +26,7 @@
 ;;
 ;;   (require 'scad-preview)
 ;;
-;; then press "C-c C-p" in a `scad-mode' buffer.
+;; then call `scad-preview-mode' in a `scad-mode' buffer.
 ;;
 ;; You can rotate the preview image with following keybinds:
 ;;
@@ -245,7 +245,6 @@
 
 ;; + interface
 
-(define-key scad-mode-map (kbd "C-c C-p") 'scad-preview-mode)
 
 (defun scad-preview-mode ()
   "Preview SCAD models in real-time in Emacs."
