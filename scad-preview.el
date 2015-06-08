@@ -135,11 +135,11 @@ preview buffer."
     (with-selected-window (split-window (selected-window)
                                         (- scad-preview-window-size)
                                         scad-preview-window-position)
-      (switch-to-buffer scad-preview--buffer))
+      (switch-to-buffer scad-preview--buffer)
+      (scad-preview--image-mode)
+      (add-hook 'kill-buffer-hook 'scad-preview--end nil t))
     (add-hook 'kill-buffer-hook 'scad-preview--end nil t)
     (add-hook 'after-change-functions 'scad-preview--after-change-function t)
-    (with-current-buffer scad-preview--buffer
-      (add-hook 'kill-buffer-hook 'scad-preview--end nil t))
     (scad-preview-reset-camera-parameters)))
 
 (defun scad-preview--end ()
