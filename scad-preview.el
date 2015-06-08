@@ -98,6 +98,7 @@
 (defvar scad-preview--timer-object      nil)
 (defvar scad-preview--modified-flag     nil)
 (defvar scad-preview--scad-process      nil)
+(defvar scad-preview--scad-status       nil)
 
 (defun scad-preview--after-change-function (&rest _)
   "Mark that the buffer is modified."
@@ -123,6 +124,7 @@ preview buffer."
     (setq scad-preview-mode           t
           scad-preview--buffer        (get-buffer-create "*SCAD Preview*")
           scad-preview--source-buffer (current-buffer)
+          scad-preview--scad-status   nil
           scad-preview--timer-object
           (run-with-idle-timer
            scad-preview-refresh-delay t
@@ -165,15 +167,18 @@ preview buffer."
   (with-current-buffer scad-preview--source-buffer
     (let ((infile (make-temp-file "scad_" nil ".scad"))
           (outfile (concat temporary-file-directory (make-temp-name "scad_")  ".png")))
+      (setq scad-preview--scad-status "Preparing...")
       (save-restriction
         (widen)
         (write-region (point-min) (point-max) infile nil 'nomsg))
       (when (and scad-preview--scad-process (process-live-p scad-preview--scad-process))
+        (setq scad-preview--scad-status "Aborting...")
         (set-process-sentinel scad-preview--scad-process nil)
         (delete-process scad-preview--scad-process))
       (condition-case nil
           (progn
-            (setq scad-preview--scad-process
+            (setq scad-preview--scad-status "Rendering..."
+                  scad-preview--scad-process
                   (start-process
                    "scad process" nil scad-command
                    "-o" outfile
@@ -188,18 +193,19 @@ preview buffer."
              scad-preview--scad-process
              `(lambda (p _)
                 (delete-file ,infile)
-                (with-current-buffer scad-preview--buffer
-                  (fundamental-mode)
-                  (erase-buffer)
-                  (cond ((not (file-exists-p ,outfile))
-                         (message "SCAD: Compilation failed."))
-                        (t
+                (cond ((not (file-exists-p ,outfile))
+                       (setq scad-preview--scad-status "Compile Error"))
+                      (t
+                       (setq scad-preview--scad-status "Success")
+                       (with-current-buffer scad-preview--buffer
+                         (fundamental-mode)
+                         (erase-buffer)
                          (insert-file-contents ,outfile)
-                         (scad-preview--image-mode)
-                         (delete-file ,outfile)))))))
-        (error (progn (delete-file infile)
-                      (scad-preview--end)
-                      (message "SCAD: Failed to start OpenSCAD process.")))))))
+                         (scad-preview--image-mode))
+                       (delete-file ,outfile))))))
+        (error (progn (setq scad-preview--scad-status "OpenSCAD not available")
+                      (delete-file infile)
+                      (scad-preview--end)))))))
 
 ;; + minor-mode for the preview buffer
 
@@ -261,13 +267,18 @@ preview buffer."
 (define-derived-mode scad-preview--image-mode fundamental-mode "SCADp"
   "Major mode for SCAD preview buffers."
   ;; suppress messages (http://qiita.com/itiut@github/items/d917eafd6ab255629346)
-  (let ((message-log-max nil))
-    (with-temp-message (or (current-message) "")
-      (condition-case nil
-          (progn
-            (image-mode)
-            (use-local-map scad-preview--image-mode-map))
-        (error (message "SCAD: Compilation failed."))))))
+  (condition-case nil
+      (let ((message-log-max nil))
+        (with-temp-message (or (current-message) "")
+          (image-mode)))
+    (error (setq scad-preview--scad-status "Compile Error")))
+  (setq-local mode-line-format
+              '(" "
+                (:eval (apply 'format "[%d %d %d] [%d %d %d] %d"
+                              scad-preview--camera-parameters))
+                " / "
+                scad-preview--scad-status))
+  (use-local-map scad-preview--image-mode-map))
 
 ;; + interface
 
