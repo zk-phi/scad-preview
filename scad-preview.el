@@ -251,7 +251,7 @@ preview buffer."
 (defun scad-preview-dist- () (interactive) (scad-preview--increment-camera-parameter 6 -100))
 
 (define-derived-mode scad-preview--image-mode fundamental-mode "SCADp"
-  "Minor mode for SCAD preview buffers."
+  "Major mode for SCAD preview buffers."
   ;; suppress messages (http://qiita.com/itiut@github/items/d917eafd6ab255629346)
   (let ((message-log-max nil))
     (with-temp-message (or (current-message) "")
