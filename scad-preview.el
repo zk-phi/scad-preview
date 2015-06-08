@@ -187,15 +187,15 @@ preview buffer."
              scad-preview--scad-process
              `(lambda (p _)
                 (delete-file ,infile)
-                (if (not (file-exists-p ,outfile))
-                    (message "SCAD: Compilation failed.")
-                  (when (buffer-live-p scad-preview--buffer)
-                    (with-current-buffer scad-preview--buffer
-                      (fundamental-mode)
-                      (erase-buffer)
-                      (insert-file-contents ,outfile)
-                      (scad-preview--image-mode)))
-                  (delete-file ,outfile)))))
+                (with-current-buffer scad-preview--buffer
+                  (fundamental-mode)
+                  (erase-buffer)
+                  (cond ((not (file-exists-p ,outfile))
+                         (message "SCAD: Compilation failed."))
+                        (t
+                         (insert-file-contents ,outfile)
+                         (scad-preview--image-mode)
+                         (delete-file ,outfile)))))))
         (error (progn (delete-file infile)
                       (scad-preview--end)
                       (message "SCAD: Failed to start OpenSCAD process.")))))))
