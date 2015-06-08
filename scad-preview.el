@@ -97,6 +97,7 @@
 (defvar scad-preview--camera-parameters nil)
 (defvar scad-preview--timer-object      nil)
 (defvar scad-preview--modified-flag     nil)
+(defvar scad-preview--scad-process      nil)
 
 (defun scad-preview--after-change-function (&rest _)
   "Mark that the buffer is modified."
@@ -166,19 +167,24 @@ preview buffer."
       (save-restriction
         (widen)
         (write-region (point-min) (point-max) infile nil 'nomsg))
-      (save-window-excursion
-        (condition-case nil
+      (when (and scad-preview--scad-process (process-live-p scad-preview--scad-process))
+        (set-process-sentinel scad-preview--scad-process nil)
+        (delete-process scad-preview--scad-process))
+      (condition-case nil
+          (progn
+            (setq scad-preview--scad-process
+                  (start-process
+                   "scad process" nil scad-command
+                   "-o" outfile
+                   (concat "--imgsize="
+                           (number-to-string (car scad-preview-image-size)) ","
+                           (number-to-string (cdr scad-preview-image-size)))
+                   (concat "--camera="
+                           (mapconcat 'number-to-string scad-preview--camera-parameters ","))
+                   (concat "--colorscheme=" scad-preview-colorscheme)
+                   infile))
             (set-process-sentinel
-             (start-process
-              "scad process" nil scad-command
-              "-o" outfile
-              (concat "--imgsize="
-                      (number-to-string (car scad-preview-image-size)) ","
-                      (number-to-string (cdr scad-preview-image-size)))
-              (concat "--camera="
-                      (mapconcat 'number-to-string scad-preview--camera-parameters ","))
-              (concat "--colorscheme=" scad-preview-colorscheme)
-              infile)
+             scad-preview--scad-process
              `(lambda (p _)
                 (delete-file ,infile)
                 (when (file-exists-p ,outfile)
@@ -188,10 +194,10 @@ preview buffer."
                       (erase-buffer)
                       (insert-file-contents ,outfile)
                       (scad-preview--image-mode)))
-                  (delete-file ,outfile))))
-          (error (progn (delete-file infile)
-                        (scad-preview--end)
-                        (message "SCAD: Failed to start OpenSCAD process."))))))))
+                  (delete-file ,outfile)))))
+        (error (progn (delete-file infile)
+                      (scad-preview--end)
+                      (message "SCAD: Failed to start OpenSCAD process.")))))))
 
 ;; + minor-mode for the preview buffer
 
