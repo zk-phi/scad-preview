@@ -187,7 +187,8 @@ preview buffer."
              scad-preview--scad-process
              `(lambda (p _)
                 (delete-file ,infile)
-                (when (file-exists-p ,outfile)
+                (if (not (file-exists-p ,outfile))
+                    (message "SCAD: Compilation failed.")
                   (when (buffer-live-p scad-preview--buffer)
                     (with-current-buffer scad-preview--buffer
                       (fundamental-mode)
@@ -261,8 +262,11 @@ preview buffer."
   ;; suppress messages (http://qiita.com/itiut@github/items/d917eafd6ab255629346)
   (let ((message-log-max nil))
     (with-temp-message (or (current-message) "")
-      (image-mode)))
-  (use-local-map scad-preview--image-mode-map))
+      (condition-case nil
+          (progn
+            (image-mode)
+            (use-local-map scad-preview--image-mode-map))
+        (error (message "SCAD: Compilation failed."))))))
 
 ;; + interface
 
