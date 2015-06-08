@@ -144,6 +144,10 @@ preview buffer."
   "Turn `scad-preview-mode' off."
   (when scad-preview-mode
     (setq scad-preview-mode nil)
+    (when (and scad-preview--scad-process
+               (process-live-p scad-preview--scad-process))
+      (set-process-sentinel scad-preview--scad-process nil)
+      (delete-process scad-preview--scad-process))
     (when (timerp scad-preview--timer-object)
       (cancel-timer scad-preview--timer-object))
     (when (buffer-live-p scad-preview--buffer)
@@ -153,10 +157,7 @@ preview buffer."
     (when (buffer-live-p scad-preview--source-buffer)
       (with-current-buffer scad-preview--source-buffer
         (remove-hook 'kill-buffer-hook 'scad-preview--end t)
-        (remove-hook 'after-change-functions 'scad-preview--after-change-function t)))
-    (setq scad-preview--buffer        nil
-          scad-preview--source-buffer nil
-          scad-preview--timer-object  nil)))
+        (remove-hook 'after-change-functions 'scad-preview--after-change-function t)))))
 
 (defun scad-preview-refresh ()
   "Update the preview buffer."
