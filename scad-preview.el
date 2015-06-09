@@ -124,7 +124,7 @@ preview buffer."
     (setq scad-preview-mode           t
           scad-preview--buffer        (get-buffer-create "*SCAD Preview*")
           scad-preview--source-buffer (current-buffer)
-          scad-preview--scad-status   nil
+          scad-preview--scad-status   "Ready"
           scad-preview--timer-object
           (run-with-idle-timer
            scad-preview-refresh-delay t
