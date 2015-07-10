@@ -217,6 +217,11 @@ preview buffer."
                       (delete-file infile)
                       (scad-preview--end)))))))
 
+(add-hook 'kill-emacs-hook
+          (lambda ()
+            (mapc (lambda (f) (when (file-exists-p f) (delete-file f)))
+                  scad-preview--temp-files)))
+
 ;; + minor-mode for the preview buffer
 
 (defvar scad-preview--image-mode-map
