@@ -18,7 +18,7 @@
 
 ;; Author: zk_phi
 ;; URL: http://hins11.yu-yake.com/
-;; Version: 0.1.0
+;; Version: 0.1.1
 
 ;;; Commentary:
 
@@ -49,6 +49,7 @@
 ;;; Change Log:
 
 ;; 0.1.0 test release
+;; 0.1.1 fix relative path issue
 
 ;;; Code:
 
@@ -56,7 +57,7 @@
 (require 'compile)
 (require 'scad "scad-mode")
 
-(defconst scad-preview-version "0.1.0")
+(defconst scad-preview-version "0.1.1")
 
 ;; + customs
 
@@ -166,8 +167,12 @@ preview buffer."
   "Update the preview buffer."
   (interactive)
   (with-current-buffer scad-preview--source-buffer
-    (let ((infile (make-temp-file "scad_" nil ".scad"))
-          (outfile (concat temporary-file-directory (make-temp-name "scad_")  ".png")))
+    (let* ((infile (concat default-directory
+                           "scadpreview_"
+                           (if buffer-file-name
+                               (file-name-nondirectory buffer-file-name)
+                             (make-temp-name ""))))
+           (outfile (concat temporary-file-directory (make-temp-name "scad_")  ".png")))
       (push infile scad-preview--temp-files)
       (push outfile scad-preview--temp-files)
       (setq scad-preview--scad-status "Preparing...")
