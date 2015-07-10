@@ -161,12 +161,15 @@ preview buffer."
         (remove-hook 'kill-buffer-hook 'scad-preview--end t)
         (remove-hook 'after-change-functions 'scad-preview--after-change-function t)))))
 
+(defvar scad-preview--temp-files nil)
 (defun scad-preview-refresh ()
   "Update the preview buffer."
   (interactive)
   (with-current-buffer scad-preview--source-buffer
     (let ((infile (make-temp-file "scad_" nil ".scad"))
           (outfile (concat temporary-file-directory (make-temp-name "scad_")  ".png")))
+      (push infile scad-preview--temp-files)
+      (push outfile scad-preview--temp-files)
       (setq scad-preview--scad-status "Preparing...")
       (save-restriction
         (widen)
@@ -192,7 +195,6 @@ preview buffer."
             (set-process-sentinel
              scad-preview--scad-process
              `(lambda (p _)
-                (delete-file ,infile)
                 (cond ((not (file-exists-p ,outfile))
                        (setq scad-preview--scad-status "Compile Error"))
                       (t
@@ -201,8 +203,11 @@ preview buffer."
                          (fundamental-mode)
                          (erase-buffer)
                          (insert-file-contents ,outfile)
-                         (scad-preview--image-mode))
-                       (delete-file ,outfile))))))
+                         (scad-preview--image-mode))))
+                (dolist (file scad-preview--temp-files)
+                  (when (file-exists-p file)
+                    (delete-file file))
+                  (setq scad-preview--temp-files nil)))))
         (error (progn (setq scad-preview--scad-status "OpenSCAD not available")
                       (delete-file infile)
                       (scad-preview--end)))))))
