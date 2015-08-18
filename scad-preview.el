@@ -168,10 +168,10 @@ preview buffer."
   (interactive)
   (with-current-buffer scad-preview--source-buffer
     (let* ((infile (concat default-directory
-                           "scadpreview_"
                            (if buffer-file-name
-                               (file-name-nondirectory buffer-file-name)
-                             (make-temp-name ""))))
+                               (concat "scadpreview_"
+                                       (file-name-nondirectory buffer-file-name))
+                             (make-temp-name "scadpreview_"))))
            (outfile (concat temporary-file-directory (make-temp-name "scad_")  ".png")))
       (push infile scad-preview--temp-files)
       (push outfile scad-preview--temp-files)
