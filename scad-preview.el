@@ -56,7 +56,7 @@
 
 (require 'image-mode)
 (require 'compile)
-(require 'scad "scad-mode")
+(require 'scad-mode)
 
 (defconst scad-preview-version "0.1.1")
 
