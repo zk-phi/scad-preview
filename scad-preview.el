@@ -51,14 +51,16 @@
 
 ;; 0.1.0 test release
 ;; 0.1.1 fix relative path issue
+;; 0.1.2 added mouse support and rotation/translation according to screen direction
 
 ;;; Code:
 
 (require 'image-mode)
 (require 'compile)
 (require 'scad-mode)
+(require 'linal-util.el)
 
-(defconst scad-preview-version "0.1.1")
+(defconst scad-preview-version "0.1.2")
 
 ;; + customs
 
@@ -223,6 +225,87 @@ preview buffer."
             (mapc (lambda (f) (when (file-exists-p f) (delete-file f)))
                   scad-preview--temp-files)))
 
+;; + utility functions
+
+(defun scad-preview--euler ()
+  "Return the list of Euler angles"
+  (butlast (nthcdr 3 scad-preview--camera-parameters))
+  )
+
+(defun scad-preview--position ()
+  "Return the list of cartesian coordinates"
+  (butlast scad-preview--camera-parameters 4)
+  )
+
+;; + transformation according to camera axis
+
+(defun scad-preview--absolute-rotate-camera (ang vec &optional deg)
+  "Rotate camera around a global axis
+If third parameter is not nil, angle is interpreted as degree"
+  (let (
+	(newangles
+	 (car (rot2euler (matrixmul3x3 (rotation ang vec deg) (euler2rot (scad-preview--euler) t) ) t)))
+	(camera-param scad-preview--camera-parameters)
+	)
+    (setq scad-preview--camera-parameters (copy-sequence (append (butlast camera-param 4) newangles (last camera-param))))
+    )
+  (scad-preview-refresh)
+  )
+
+(defun scad-preview--absolute-move-camera (val vec)
+  "Move camera with respect to a global axis"
+  (let (
+	(newpos
+	  ((lambda (ls) (list
+		   (+ (nth 0 scad-preview--camera-parameters) (nth 0 ls)
+		      )
+		   (+ (nth 1 scad-preview--camera-parameters) (nth 1 ls)
+		      )
+		   (+ (nth 2 scad-preview--camera-parameters) (nth 2 ls)
+		      )
+		   ))
+     (mapcar (lambda (element) (* element val)) (matrixvectormul3x1 (euler2rot (scad-preview--euler) t) vec))))
+	(camera-param scad-preview--camera-parameters)
+	)
+    (setq scad-preview--camera-parameters (copy-sequence (append newpos (last camera-param 4))))
+    )
+  (scad-preview-refresh)
+  )
+
+(defun scad-preview--rotate-camera-horizontal (val &optional deg)
+  "Rotate the view around the horizontal axis of the screen"
+  (interactive)
+  (scad-preview--absolute-rotate-camera val (matrixvectormul3x1 (euler2rot (scad-preview--euler) t) '(1 0 0)) deg)
+  )
+
+(defun scad-preview--rotate-camera-vertical (val &optional deg)
+  "Rotate the camera around the vertical axis of the screen"
+  (interactive)
+  (scad-preview--absolute-rotate-camera val (matrixvectormul3x1 (euler2rot (scad-preview--euler) t) '(0 1 0)) deg
+  )
+
+(defun scad-mouse-trans (event)
+  "Translate the scad-prview based on the drag event parallel to the screen edges"
+  (interactive "e")
+  (let ((p1 (posn-x-y (event-start event)))
+	(p2 (posn-x-y (event-end event)))
+	)
+    (scad-preview--absolute-move-camera (/(- (car p1) (car p2)) 2) '(1 0 0))
+    (scad-preview--absolute-move-camera (/(- (cdr p1) (cdr p2)) 2) '(0 -1 0))
+    )
+  )
+
+(defun scad-mouse-rot (event)
+  "Rotate the scad-prview based on the drag event around edges parallel to the screen edges"
+  (interactive "e")
+  (let ((p1 (posn-x-y (event-start event)))
+	(p2 (posn-x-y (event-end event)))
+	)
+    (scad-preview--rotate-camera-vertical (/ (- (car p1) (car p2)) 10))
+    (scad-preview--rotate-camera-horizontal (/ (- (cdr p1) (cdr p2)) 10))
+    )
+  )
+
 ;; + minor-mode for the preview buffer
 
 (defvar scad-preview--image-mode-map
@@ -264,6 +347,10 @@ preview buffer."
     (define-key keymap (kbd "M-<down>") 'scad-preview-trnsz+)
     (define-key keymap (kbd "M-n") 'scad-preview-trnsz+)
     (define-key keymap (kbd "M-j") 'scad-preview-trnsz+)
+    (define-key keymap (kbd "<C-mouse-4>") (lambda () (interactive) (scad-preview--increment-camera-parameter 6 50)))
+    (define-key keymap (kbd "<C-mouse-5>") (lambda () (interactive) (scad-preview--increment-camera-parameter 6 -50)))
+    (define-key keymap (kbd "<drag-mouse-3>") 'scad-mouse-trans)
+    (define-key keymap (kbd "<drag-mouse-1>") 'scad-mouse-rot)
     keymap)
   "Keymap for SCAD preview buffers.")
 
