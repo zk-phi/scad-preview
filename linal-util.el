@@ -36,7 +36,7 @@
   (when (= (length vec) 3)
     (let (
 	  (ang
-	   (if ang
+	   (if deg
 	       (* pi (/ ang (float 180)))
 	     ang
 	     ))
