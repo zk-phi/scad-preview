@@ -58,7 +58,7 @@
 (require 'image-mode)
 (require 'compile)
 (require 'scad-mode)
-(require 'linal-util.el)
+(require 'linal-util)
 
 (defconst scad-preview-version "0.1.2")
 
