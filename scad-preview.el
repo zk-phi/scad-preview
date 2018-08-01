@@ -81,8 +81,8 @@
   :group 'scad-preview)
 
 (defcustom scad-preview-window-position 'right
-  "Position of the preview window. The value can be either 'right,
-  'left, 'below, or 'above."
+  "Position of the preview window.
+The value can be either 'right, 'left, 'below, or 'above."
   :group 'scad-preview)
 
 (defcustom scad-preview-window-size 65
@@ -104,8 +104,8 @@
 (defvar scad-preview--scad-process      nil)
 (defvar scad-preview--scad-status       nil)
 
-(defun scad-preview--after-change-function (&rest _)
-  "Mark that the buffer is modified."
+(defun scad-preview--after-change-function (&rest rest)
+  "Mark that the buffer is modified.  Accepts any argument as REST."
   (setq scad-preview--modified-flag t))
 
 (defun scad-preview-reset-camera-parameters ()
@@ -116,8 +116,7 @@
   (scad-preview-refresh))
 
 (defun scad-preview--increment-camera-parameter (index val)
-  "Increment INDEX-th camera parameter by VAL and update the
-preview buffer."
+  "Increment INDEX -th camera parameter by VAL and update the preview buffer."
   (let ((cell (nthcdr index scad-preview--camera-parameters)))
     (setcar cell (+ (car cell) val))
     (scad-preview-refresh)))
@@ -228,20 +227,20 @@ preview buffer."
 ;; + utility functions
 
 (defun scad-preview--euler ()
-  "Return the list of Euler angles"
+  "Return the list of Euler angles."
   (butlast (nthcdr 3 scad-preview--camera-parameters))
   )
 
 (defun scad-preview--position ()
-  "Return the list of cartesian coordinates"
+  "Return the list of cartesian coordinates."
   (butlast scad-preview--camera-parameters 4)
   )
 
 ;; + transformation according to camera axis
 
 (defun scad-preview--absolute-rotate-camera (ang vec &optional deg)
-  "Rotate camera around a global axis
-If third parameter is not nil, angle is interpreted as degree"
+  "Rotate camera with ANG around a global axis VEC.
+If DEG is not nil, angle is interpreted as degree"
   (let (
 	(newangles
 	 (car (rot2euler (matrixmul3x3 (rotation ang vec deg) (euler2rot (scad-preview--euler) t) ) t)))
@@ -253,18 +252,18 @@ If third parameter is not nil, angle is interpreted as degree"
   )
 
 (defun scad-preview--absolute-move-camera (val vec)
-  "Move camera with respect to a global axis"
+  "Move camera with VAL unit with respect to a global axis VEC."
   (let (
 	(newpos
-	  ((lambda (ls) (list
-		   (+ (nth 0 scad-preview--camera-parameters) (nth 0 ls)
-		      )
-		   (+ (nth 1 scad-preview--camera-parameters) (nth 1 ls)
-		      )
-		   (+ (nth 2 scad-preview--camera-parameters) (nth 2 ls)
-		      )
-		   ))
-     (mapcar (lambda (element) (* element val)) (matrixvectormul3x1 (euler2rot (scad-preview--euler) t) vec))))
+	 ((lambda (ls) (list
+			(+ (nth 0 scad-preview--camera-parameters) (nth 0 ls)
+			   )
+			(+ (nth 1 scad-preview--camera-parameters) (nth 1 ls)
+			   )
+			(+ (nth 2 scad-preview--camera-parameters) (nth 2 ls)
+			   )
+			))
+	  (mapcar (lambda (element) (* element val)) (matrixvectormul3x1 (euler2rot (scad-preview--euler) t) vec))))
 	(camera-param scad-preview--camera-parameters)
 	)
     (setq scad-preview--camera-parameters (copy-sequence (append newpos (last camera-param 4))))
@@ -273,19 +272,21 @@ If third parameter is not nil, angle is interpreted as degree"
   )
 
 (defun scad-preview--rotate-camera-horizontal (val &optional deg)
-  "Rotate the view around the horizontal axis of the screen"
+  "Rotate the view around the horizontal axis of the screen with VAL.
+VAL is intrepreted as degree if DEG is non-nil"
   (interactive)
   (scad-preview--absolute-rotate-camera val (matrixvectormul3x1 (euler2rot (scad-preview--euler) t) '(1 0 0)) deg)
   )
 
 (defun scad-preview--rotate-camera-vertical (val &optional deg)
-  "Rotate the camera around the vertical axis of the screen"
+  "Rotate the camera around the vertical axis of the screen with VAL.
+VAL is intrepreted as degree if DEG is non-nil"
   (interactive)
-  (scad-preview--absolute-rotate-camera val (matrixvectormul3x1 (euler2rot (scad-preview--euler) t) '(0 1 0)) deg
+  (scad-preview--absolute-rotate-camera val (matrixvectormul3x1 (euler2rot (scad-preview--euler) t) '(0 1 0)) deg)
   )
 
 (defun scad-mouse-trans (event)
-  "Translate the scad-prview based on the drag event parallel to the screen edges"
+  "Translate the scad-prview based on the drag EVENT parallel to the screen edges."
   (interactive "e")
   (let ((p1 (posn-x-y (event-start event)))
 	(p2 (posn-x-y (event-end event)))
@@ -296,13 +297,13 @@ If third parameter is not nil, angle is interpreted as degree"
   )
 
 (defun scad-mouse-rot (event)
-  "Rotate the scad-prview based on the drag event around edges parallel to the screen edges"
+  "Rotate the scad-prview based on the drag EVENT around edges parallel to the screen edges."
   (interactive "e")
   (let ((p1 (posn-x-y (event-start event)))
 	(p2 (posn-x-y (event-end event)))
 	)
-    (scad-preview--rotate-camera-vertical (/ (- (car p1) (car p2)) 10))
-    (scad-preview--rotate-camera-horizontal (/ (- (cdr p1) (cdr p2)) 10))
+    (scad-preview--rotate-camera-vertical (/ (- (car p1) (car p2)) 5) t)
+    (scad-preview--rotate-camera-horizontal (/ (- (cdr p1) (cdr p2)) 5) t)
     )
   )
 
@@ -354,18 +355,18 @@ If third parameter is not nil, angle is interpreted as degree"
     keymap)
   "Keymap for SCAD preview buffers.")
 
-(defun scad-preview-trnsx+ () (interactive) (scad-preview--increment-camera-parameter 0 10))
-(defun scad-preview-trnsx- () (interactive) (scad-preview--increment-camera-parameter 0 -10))
-(defun scad-preview-trnsz+ () (interactive) (scad-preview--increment-camera-parameter 2 10))
-(defun scad-preview-trnsz- () (interactive) (scad-preview--increment-camera-parameter 2 -10))
-(defun scad-preview-rotx+ () (interactive) (scad-preview--increment-camera-parameter 3 20))
-(defun scad-preview-rotx- () (interactive) (scad-preview--increment-camera-parameter 3 -20))
-(defun scad-preview-roty+ () (interactive) (scad-preview--increment-camera-parameter 4 20))
-(defun scad-preview-roty- () (interactive) (scad-preview--increment-camera-parameter 4 -20))
-(defun scad-preview-rotz+ () (interactive) (scad-preview--increment-camera-parameter 5 20))
-(defun scad-preview-rotz- () (interactive) (scad-preview--increment-camera-parameter 5 -20))
-(defun scad-preview-dist+ () (interactive) (scad-preview--increment-camera-parameter 6 100))
-(defun scad-preview-dist- () (interactive) (scad-preview--increment-camera-parameter 6 -100))
+(defun scad-preview-trnsx+ () "Move camera 10 unit in x direction." (interactive) (scad-preview--increment-camera-parameter 0 10))
+(defun scad-preview-trnsx- () "Move camera 10 unit in x direction." (interactive) (scad-preview--increment-camera-parameter 0 -10))
+(defun scad-preview-trnsz+ () "Move camera 10 unit in z direction." (interactive) (scad-preview--increment-camera-parameter 2 10))
+(defun scad-preview-trnsz- () "Move camera 10 unit in z direction." (interactive) (scad-preview--increment-camera-parameter 2 -10))
+(defun scad-preview-rotx+ () "Increment 1st Euler angle." (interactive) (scad-preview--increment-camera-parameter 3 20))
+(defun scad-preview-rotx- () "Decrement 1st Euler angle." (interactive) (scad-preview--increment-camera-parameter 3 -20))
+(defun scad-preview-roty+ () "Increment 2nd Euler angle." (interactive) (scad-preview--increment-camera-parameter 4 20))
+(defun scad-preview-roty- () "Decrement 2nd Euler angle." (interactive) (scad-preview--increment-camera-parameter 4 -20))
+(defun scad-preview-rotz+ () "Increment 3rd Euler angle." (interactive) (scad-preview--increment-camera-parameter 5 20))
+(defun scad-preview-rotz- () "Decrement 3rd Euler angle." (interactive) (scad-preview--increment-camera-parameter 5 -20))
+(defun scad-preview-dist+ () "Zoom-in camera 100 units." (interactive) (scad-preview--increment-camera-parameter 6 100))
+(defun scad-preview-dist- () "Zoom-out camera 100 units." (interactive) (scad-preview--increment-camera-parameter 6 -100))
 
 (define-derived-mode scad-preview--image-mode fundamental-mode "SCADp"
   "Major mode for SCAD preview buffers."
