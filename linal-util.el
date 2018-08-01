@@ -50,19 +50,19 @@ Rotation vector with ANG around VEC.  ANG is in degree if DEG is non-nil."
 	    (vt (- 1 (cos ang)))
 	    (st (sin ang))
 	    (ct (cos ang))
-)
-      `(,(+ (* vt (* (nth 0 o) (nth 0 o))) (* 1 ct))
-,(- (* vt (* (nth 0 o) (nth 1 o))) (* (nth 2 o) st))
-,(+ (* vt (* (nth 0 o) (nth 2 o))) (* (nth 1 o) st))
+	    )
+	`(,(+ (* vt (* (nth 0 o) (nth 0 o))) (* 1 ct))
+	  ,(- (* vt (* (nth 0 o) (nth 1 o))) (* (nth 2 o) st))
+	  ,(+ (* vt (* (nth 0 o) (nth 2 o))) (* (nth 1 o) st))
 
-,(+ (* vt (* (nth 1 o) (nth 0 o))) (* (nth 2 o) st))
-,(+ (* vt (* (nth 1 o) (nth 1 o))) (* 1 ct))
-,(- (* vt (* (nth 1 o) (nth 2 o))) (* (nth 0 o) st))
+	  ,(+ (* vt (* (nth 1 o) (nth 0 o))) (* (nth 2 o) st))
+	  ,(+ (* vt (* (nth 1 o) (nth 1 o))) (* 1 ct))
+	  ,(- (* vt (* (nth 1 o) (nth 2 o))) (* (nth 0 o) st))
 
-,(- (* vt (* (nth 2 o) (nth 0 o))) (* (nth 1 o) st))
-,(+ (* vt (* (nth 2 o) (nth 1 o))) (* (nth 0 o) st))
-,(+ (* vt (* (nth 2 o) (nth 2 o))) (* 1 ct))
-)))))
+	  ,(- (* vt (* (nth 2 o) (nth 0 o))) (* (nth 1 o) st))
+	  ,(+ (* vt (* (nth 2 o) (nth 1 o))) (* (nth 0 o) st))
+	  ,(+ (* vt (* (nth 2 o) (nth 2 o))) (* 1 ct))
+	  )))))
 (defun matrixmul3x3 (a b)
   "Multiplying two 3x3 matrices.
 The two matrices are A and B"
@@ -146,6 +146,55 @@ if non-nil DEG is result is converted to degree"
 EULERLS is the list of Euler angles,
 if non-nil DEG is result is converted to degree"
   (matrixmul3x3 (matrixmul3x3 (rotation (nth 2 eulerls) '(0 0 1) deg) (rotation (nth 1 eulerls) '(0 1 0) deg)) (rotation (nth 0 eulerls) '(1 0 0) deg))
+  )
+
+(defun det3x3 (mat)
+  "Calculate the determinant of 3x3 matrix MAT."
+  (when (= (length mat) 9)
+    (+ (- 0 (* (nth 2 mat) (nth 4 mat) (nth 6 mat)))
+       (* (nth 1 mat) (nth 5 mat) (nth 6 mat))
+       (* (nth 2 mat) (nth 3 mat) (nth 7 mat))
+       (- 0 (* (nth 0 mat) (nth 5 mat) (nth 7 mat)))
+       (- 0 (* (nth 1 mat) (nth 3 mat) (nth 8 mat)))
+       (* (nth 0 mat) (nth 4 mat) (nth 8 mat))
+       )
+    )
+  )
+
+(defun invert3x3 (mat)
+  "Invert 3x3 matrix MAT."
+  (when (= (length mat) 9)
+    (let
+	(
+	 (det (det3x3 mat))
+	 (a (float (nth 0 mat)))
+	 (b (float (nth 1 mat)))
+	 (c (float (nth 2 mat)))
+	 (d (float (nth 3 mat)))
+	 (e (float (nth 4 mat)))
+	 (f (float (nth 5 mat)))
+	 (g (float (nth 6 mat)))
+	 (h (float (nth 7 mat)))
+	 (i (float (nth 8 mat)))
+	 )
+      (if (not(= det 0))
+	  (let
+	      (
+	       (A (/ ( - (* e i) (* f h)) det))
+	       (D (/ ( - (* c h) (* b i)) det))
+	       (G (/ ( - (* b f) (* c e)) det))
+	       (B (/ ( - (* f g) (* d i)) det))
+	       (E (/ ( - (* a i) (* c g)) det))
+	       (H (/ ( - (* c d) (* a f)) det))
+	       (C (/ ( - (* d h) (* e g)) det))
+	       (F (/ ( - (* b g) (* a h)) det))
+	       (I (/ ( - (* a e) (* b d)) det))
+	       )
+	    (list A D G B E H C F I)
+	    )
+	)
+      )
+    )
   )
 
 (provide 'linal-util)
