@@ -35,3 +35,17 @@ You can rotate the preview image with following keys :
 - =M-<up>=, =M=k=    :: translate- along z-axis
 - =M-<down>=, =M-j=  :: translate+ along z-axis
 - =r=                :: reset view
+
+** Mouse
+
+Now it is possible to use the mouse to manipulate the preview image.
+Mouse usage slightly resembles the original OpenScad manipulation.
+The reason behind the ununified usage of C key is laziness (haven't
+found a trivial way to use mouse-wheel without modifier key, or use
+drag with C/M).
+
+- =C-mouse-4=, =C-wheel-up=   :: zoom-out
+- =C-mouse-5=, =C-wheel-down= :: zoom-in
+- =drag-mouse-3=              :: rotate
+- =drag-mouse-1=              :: translate
+
