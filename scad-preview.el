@@ -17,7 +17,7 @@
 ;; Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 ;; Author: zk_phi
-;; URL: http://hins11.yu-yake.com/
+;; URL: http://zk-phi.gitub.io/
 ;; Package-Requires: ((scad-mode "91.0"))
 ;; Version: 0.1.1
 
