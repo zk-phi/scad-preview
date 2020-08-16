@@ -68,27 +68,33 @@
 
 (defcustom scad-preview-default-camera-parameters '(0 0 0 50 0 20 500)
   "Default parameters for the Gimbal camera."
+  :type '(list integer)
   :group 'scad-preview)
 
 (defcustom scad-preview-refresh-delay 1.5
   "Delay in seconds until updating preview."
+  :type 'number
   :group 'scad-preview)
 
 (defcustom scad-preview-image-size '(450 . 450)
   "Size of preview image."
+  :type '(cons integer integer)
   :group 'scad-preview)
 
 (defcustom scad-preview-window-position 'right
   "Position of the preview window. The value can be either 'right,
   'left, 'below, or 'above."
+  :type 'symbol
   :group 'scad-preview)
 
 (defcustom scad-preview-window-size 65
   "Size in columns(lines) of the preview window."
+  :type 'integer
   :group 'scad-preview)
 
 (defcustom scad-preview-colorscheme "Cornfield"
   "Colorscheme for rendering preview."
+  :type 'string
   :group 'scad-preview)
 
 ;; + core functions/variables
