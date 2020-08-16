@@ -18,8 +18,8 @@
 
 ;; Author: zk_phi
 ;; URL: http://zk-phi.gitub.io/
-;; Package-Requires: ((scad-mode "91.0"))
-;; Version: 0.1.1
+;; Package-Requires: ((scad-mode "91.0") (emacs "24.4"))
+;; Version: 0.1.2
 
 ;;; Commentary:
 
@@ -51,6 +51,7 @@
 
 ;; 0.1.0 test release
 ;; 0.1.1 fix relative path issue
+;; 0.1.2 Emacs 24.4 support
 
 ;;; Code:
 
@@ -58,7 +59,7 @@
 (require 'compile)
 (require 'scad-mode)
 
-(defconst scad-preview-version "0.1.1")
+(defconst scad-preview-version "0.1.2")
 
 ;; + customs
 
@@ -308,7 +309,7 @@ preview buffer."
   "Rotate preview image interactively."
   (interactive)
   (message "Use arrow keys (+[CM]) to rotate image.")
-  (set-temporary-overlay-map scad-preview--image-mode-map t))
+  (set-transient-map scad-preview--image-mode-map t))
 
 (defun scad-preview-export ()
   "Render and export current SCAD model."
