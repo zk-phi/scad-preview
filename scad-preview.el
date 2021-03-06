@@ -1,3 +1,4 @@
+;;; -*- lexical-binding: t -*-
 ;;; scad-preview.el --- Preview SCAD models in real-time within Emacs
 
 ;; Copyright (C) 2013-2015 zk_phi
