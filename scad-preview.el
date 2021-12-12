@@ -18,7 +18,7 @@
 ;; Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 ;; Author: zk_phi
-;; URL: http://zk-phi.gitub.io/
+;; URL: https://zk-phi.github.io/
 ;; Package-Requires: ((scad-mode "91.0") (emacs "24.4"))
 ;; Version: 0.1.2
 
