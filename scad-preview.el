@@ -99,6 +99,12 @@
   :type 'string
   :group 'scad-preview)
 
+(defcustom scad-preview-view '()
+  "List of views to be rendered.
+Options are axes,crosshairs, edges, scales, wireframe."
+  :type 'list
+  :group 'scad-preview)
+
 ;; + core functions/variables
 
 (defvar scad-preview-mode               nil)
@@ -205,6 +211,8 @@ preview buffer."
                    (concat "--camera="
                            (mapconcat 'number-to-string scad-preview--camera-parameters ","))
                    (concat "--colorscheme=" scad-preview-colorscheme)
+                   (concat "--view="
+                           (mapconcat (lambda(x)x) scad-preview-view ","))
                    infile))
             (set-process-sentinel
              scad-preview--scad-process
